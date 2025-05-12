@@ -105,6 +105,35 @@
             font-size: 1rem;
         }
 
+        .github-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 0.8rem;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .github-btn:hover {
+            background: #f5f5f5;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .github-btn img {
+            width: 24px;
+            margin-right: 10px;
+        }
+
+        .github-btn span {
+            color: #333;
+            font-size: 1rem;
+        }
+
         .divider {
             display: flex;
             align-items: center;
@@ -192,6 +221,11 @@
         <button class="facebook-btn" onclick="signInWithFacebook()">
             <img src="https://static.xx.fbcdn.net/rsrc.php/yD/r/d4ZIVX-5C-b.ico" alt="Facebook">
             <span>Đăng nhập với Facebook</span>
+        </button>
+
+        <button class="github-btn" onclick="signInWithGithub()">
+            <img src="https://github.githubassets.com/favicons/favicon.svg" alt="GitHub">
+            <span>Đăng nhập với GitHub</span>
         </button>
 
         <div class="divider">
@@ -337,6 +371,60 @@
             } catch (error) {
                 console.error('Lỗi đăng nhập Facebook:', error);
                 alert('Đăng nhập Facebook thất bại: ' + error.message);
+            }
+        }
+
+        async function signInWithGithub() {
+            try {
+                const provider = new firebase.auth.GithubAuthProvider();
+                const result = await firebase.auth().signInWithPopup(provider);
+                const idToken = await result.user.getIdToken();
+                console.log('Firebase ID Token (GitHub):', idToken);
+
+                // Lấy thông tin user từ Firebase
+                const user = result.user;
+                console.log('User info (GitHub):', {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL
+                });
+
+                // Giải mã token và in ra payload
+                const payload = parseJwt(idToken);
+                console.log('ID Token payload (GitHub):', payload);
+                
+                // Gọi API đăng nhập với idToken
+                try {
+                    const apiResponse = await callLoginApi(idToken);
+                    console.log('Đăng nhập API GitHub hoàn tất:', apiResponse);
+                } catch (apiError) {
+                    console.error('Không thể đăng nhập qua API với GitHub:', apiError);
+                }
+
+            } catch (error) {
+                console.error('Lỗi đăng nhập GitHub:', error);
+                
+                // Xử lý trường hợp tài khoản đã tồn tại với email khác
+                if (error.code === 'auth/account-exists-with-different-credential') {
+                    // Lấy email từ lỗi
+                    const email = error.email;
+                    // Lấy danh sách các provider đã liên kết với email này
+                    const providers = await firebase.auth().fetchSignInMethodsForEmail(email);
+                    
+                    let message = 'Tài khoản với email này đã tồn tại. Vui lòng đăng nhập bằng: ';
+                    if (providers.includes('google.com')) {
+                        message += 'Google';
+                    } else if (providers.includes('facebook.com')) {
+                        message += 'Facebook';
+                    } else if (providers.includes('password')) {
+                        message += 'Email/Password';
+                    }
+                    
+                    alert(message);
+                } else {
+                    alert('Đăng nhập GitHub thất bại: ' + error.message);
+                }
             }
         }
 
