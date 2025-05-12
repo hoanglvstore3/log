@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - CraftUI</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .login-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-header {
+            margin-bottom: 2rem;
+        }
+
+        .login-header h1 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .google-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 0.8rem;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .google-btn:hover {
+            background: #f5f5f5;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .google-btn img {
+            width: 24px;
+            margin-right: 10px;
+        }
+
+        .google-btn span {
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .facebook-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 0.8rem;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .facebook-btn:hover {
+            background: #f5f5f5;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .facebook-btn img {
+            width: 24px;
+            margin-right: 10px;
+        }
+
+        .facebook-btn span {
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 1.5rem 0;
+            color: #666;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .divider span {
+            padding: 0 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 0.8rem;
+            width: 100%;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            background: #764ba2;
+        }
+
+        .forgot-password {
+            display: block;
+            color: #667eea;
+            text-decoration: none;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Chào mừng trở lại</h1>
+            <p>Đăng nhập để tiếp tục</p>
+        </div>
+        
+        <button class="google-btn" onclick="signInWithGoogle()">
+            <img src="https://www.google.com/favicon.ico" alt="Google">
+            <span>Đăng nhập với Google</span>
+        </button>
+
+        <button class="facebook-btn" onclick="signInWithFacebook()">
+            <img src="https://static.xx.fbcdn.net/rsrc.php/yD/r/d4ZIVX-5C-b.ico" alt="Facebook">
+            <span>Đăng nhập với Facebook</span>
+        </button>
+
+        <div class="divider">
+            <span>hoặc</span>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required placeholder="Nhập email của bạn">
+            </div>
+            <div class="form-group">
+                <label for="password">Mật khẩu</label>
+                <input type="password" id="password" required placeholder="Nhập mật khẩu">
+            </div>
+            <button type="submit" class="login-btn">Đăng nhập</button>
+        </form>
+
+        <a href="#" class="forgot-password">Quên mật khẩu?</a>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBwPY5rJm82K_gB8bJS4_xDB715ZsD03iI",
+            authDomain: "rabid-8a433.firebaseapp.com",
+            projectId: "rabid-8a433",
+            storageBucket: "rabid-8a433.appspot.com",
+            messagingSenderId: "278505072504",
+            appId: "1:278505072504:web:ef6a854083c1ecbcccca8d",
+            measurementId: "G-1HP92SQEXK"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+
+        // Hàm giải mã JWT (ID Token)
+        function parseJwt (token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        }
+
+        // Thêm hàm gọi API đăng nhập
+        async function callLoginApi(idToken) {
+            try {
+                console.log(JSON.stringify({
+                        idToken: idToken
+                    }))
+                const response = await fetch('http://localhost:3001/api/v1/auth/login-by-firebase-social', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        idToken: idToken
+                    })
+                    
+                });
+                
+                const data = await response.json();
+                console.log('API response:', data);
+                
+                // Xử lý phản hồi từ API
+                if (response.ok) {
+                    // Đăng nhập thành công, có thể lưu token từ server hoặc chuyển hướng
+                    console.log('Đăng nhập API thành công');
+                    // Nếu API trả về token hoặc các thông tin khác, xử lý ở đây
+                    return data;
+                } else {
+                    throw new Error(data.message || 'Lỗi khi gọi API đăng nhập');
+                }
+            } catch (error) {
+                console.error('Lỗi gọi API:', error);
+                alert('Lỗi khi gọi API: ' + error.message);
+                throw error;
+            }
+        }
+
+        async function signInWithGoogle() {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                const result = await firebase.auth().signInWithPopup(provider);
+                const idToken = await result.user.getIdToken();
+                console.log('Firebase ID Token:', idToken);
+
+                // Lấy thông tin user từ Firebase
+                const user = result.user;
+                console.log('User info:', {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL
+                });
+
+                // Giải mã token và in ra payload
+                const payload = parseJwt(idToken);
+                console.log('ID Token payload:', payload);
+                
+                // Gọi API đăng nhập với idToken
+                try {
+                    const apiResponse = await callLoginApi(idToken);
+                    console.log('Đăng nhập API hoàn tất:', apiResponse);
+                } catch (apiError) {
+                    console.error('Không thể đăng nhập qua API:', apiError);
+                }
+
+            } catch (error) {
+                console.error('Lỗi đăng nhập:', error);
+                alert('Đăng nhập thất bại: ' + error.message);
+            }
+        }
+
+        async function signInWithFacebook() {
+            try {
+                const provider = new firebase.auth.FacebookAuthProvider();
+                const result = await firebase.auth().signInWithPopup(provider);
+                const idToken = await result.user.getIdToken();
+                console.log('Firebase ID Token (Facebook):', idToken);
+
+                // Lấy thông tin user từ Firebase
+                const user = result.user;
+                console.log('User info (Facebook):', {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName,
+                    photoURL: user.photoURL
+                });
+
+                // Giải mã token và in ra payload
+                const payload = parseJwt(idToken);
+                console.log('ID Token payload (Facebook):', payload);
+                
+                // Gọi API đăng nhập với idToken
+                try {
+                    const apiResponse = await callLoginApi(idToken);
+                    console.log('Đăng nhập API Facebook hoàn tất:', apiResponse);
+                } catch (apiError) {
+                    console.error('Không thể đăng nhập qua API với Facebook:', apiError);
+                }
+
+            } catch (error) {
+                console.error('Lỗi đăng nhập Facebook:', error);
+                alert('Đăng nhập Facebook thất bại: ' + error.message);
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const result = await firebase.auth().signInWithEmailAndPassword(email, password);
+                console.log('Đăng nhập thành công!');
+            } catch (error) {
+                console.error('Lỗi đăng nhập:', error);
+                alert('Đăng nhập thất bại: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
